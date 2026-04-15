@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FinCalc">
+<meta name="theme-color" content="#0b0e17">
+<link rel="manifest" href="data:application/json,{}">
+<title>MBA Finance Toolkit — FINA6200</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0b0e17;--surface:#12162a;--surface2:#1a1f38;--surface3:#222848;
+  --border:#1e2445;--border2:#2a3158;
+  --text:#e8eaf0;--text2:#9ba3c2;--text3:#636d94;
+  --accent:#6c8cff;--accent2:#4f6fff;--accentDim:rgba(108,140,255,.12);
+  --purple:#a78bfa;--purpleDim:rgba(167,139,250,.1);
+  --green:#34d399;--greenDim:rgba(52,211,153,.08);
+  --red:#f87171;--redDim:rgba(248,113,113,.08);
+  --amber:#fbbf24;--amberDim:rgba(251,191,36,.08);
+  --radius:14px;--radiusSm:10px;
+  --font:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --mono:'SF Mono',SFMono-Regular,Menlo,'Courier New',monospace;
+}
+html{font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+body{min-height:100dvh;overflow-x:hidden;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+input,button,select{font-family:inherit;outline:none;border:none}
+button{cursor:pointer}
+
+/* ─── HEADER ─── */
+.hdr{position:sticky;top:0;z-index:100;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);background:rgba(11,14,23,.82);border-bottom:1px solid var(--border);padding:14px 16px 0}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.hdr h1{font-size:19px;font-weight:800;letter-spacing:-.3px;background:linear-gradient(135deg,#6c8cff 0%,#a78bfa 50%,#6c8cff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% 200%;animation:shimmer 4s ease infinite}
+@keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hdr .sub{font-size:11px;color:var(--text3);margin-top:2px;letter-spacing:.2px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.badge-exam{background:var(--accentDim);color:var(--accent);border:1px solid rgba(108,140,255,.2)}
+
+/* ─── SEARCH ─── */
+.search-w{position:relative;margin-bottom:10px}
+.search-w svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+.search-in{width:100%;padding:11px 14px 11px 38px;border-radius:var(--radiusSm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;transition:border .2s}
+.search-in::placeholder{color:var(--text3)}
+.search-in:focus{border-color:var(--accent)}
+.search-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radiusSm);max-height:260px;overflow-y:auto;z-index:200;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.search-dd-item{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px;-webkit-tap-highlight-color:transparent}
+.search-dd-item:active{background:var(--surface2)}
+.search-dd-item strong{font-size:13px;color:var(--text)}
+.search-dd-item span{font-size:11px;color:var(--text3)}
+
+/* ─── TABS ─── */
+.tabs{display:flex;overflow-x:auto;gap:6px;padding-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:7px 13px;border-radius:20px;font-size:11.5px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--text2);white-space:nowrap;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.tab:active{transform:scale(.96)}
+.tab.on{background:var(--accent2);border-color:var(--accent2);color:#fff;box-shadow:0 2px 12px rgba(79,111,255,.3)}
+.tab .ch{font-size:9px;opacity:.7;margin-left:3px}
+
+/* ─── MAIN ─── */
+.main{padding:16px}
+.cat-hdr{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.8px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.cat-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ─── CARDS ─── */
+.grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:600px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 14px 12px;position:relative;transition:border .2s,transform .15s;-webkit-tap-highlight-color:transparent}
+.card:active{transform:scale(.98);border-color:var(--accent)}
+.card h3{font-size:14px;font-weight:700;margin-bottom:3px;padding-right:36px}
+.card code{font-size:10.5px;color:var(--purple);display:block;margin-bottom:5px;font-family:var(--mono)}
+.card p{font-size:11.5px;color:var(--text3);line-height:1.45}
+.card .ch-tag{position:absolute;top:12px;right:12px;font-size:9px;font-weight:700;color:var(--text3);background:var(--surface2);padding:3px 7px;border-radius:6px;letter-spacing:.3px}
+.card .ba-dot{position:absolute;top:12px;right:52px;width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px rgba(251,191,36,.4)}
+.card .ba-dot[title]::after{content:''}
+
+/* ─── DETAIL ─── */
+.detail{animation:slideUp .2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.back{background:none;color:var(--text3);font-size:13px;padding:0;margin-bottom:14px;display:flex;align-items:center;gap:5px;transition:color .15s}
+.back:active{color:var(--text)}
+.dtitle{font-size:21px;font-weight:800;letter-spacing:-.3px;margin-bottom:3px}
+.ddesc{font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:16px}
+.formula-box{background:linear-gradient(135deg,#151a36,#1a1f38 60%,#1e1640);border:1px solid var(--border2);border-radius:var(--radius);padding:18px;text-align:center;margin-bottom:18px;position:relative;overflow:hidden}
+.formula-box::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 40%,rgba(108,140,255,.06),transparent 60%);pointer-events:none}
+.formula-box code{font-size:16px;color:#c4b5fd;font-weight:600;font-family:var(--mono);position:relative}
+
+.inp-g{margin-bottom:10px}
+.inp-g label{font-size:11.5px;color:var(--text2);font-weight:600;display:block;margin-bottom:5px;letter-spacing:.2px}
+.inp-g input,.inp-g select{width:100%;padding:12px 14px;border-radius:var(--radiusSm);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:16px;transition:border .2s;-webkit-appearance:none}
+.inp-g input:focus,.inp-g select:focus{border-color:var(--accent)}
+.inp-g input::placeholder{color:var(--text3)}
+.inp-g .hint{font-size:10px;color:var(--text3);margin-top:3px}
+
+.calc-btn{width:100%;padding:14px;border-radius:var(--radius);background:linear-gradient(135deg,var(--accent2),#7c5cfc);color:#fff;font-size:15px;font-weight:700;margin:16px 0;transition:transform .15s,opacity .15s;-webkit-appearance:none;letter-spacing:.2px;box-shadow:0 4px 20px rgba(79,111,255,.25)}
+.calc-btn:active{transform:scale(.98);opacity:.9}
+
+/* ─── RESULTS ─── */
+.result{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:slideUp .25s ease;margin-bottom:20px}
+.result-hdr{background:linear-gradient(135deg,#0d3a2e,#0a3025);padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+.result-lbl{font-size:10px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:1.2px}
+.result-val{font-size:21px;font-weight:800;color:#fff;font-family:var(--mono)}
+.result-body{padding:16px 18px}
+.step{display:flex;gap:10px;margin-bottom:8px;align-items:baseline}
+.step-n{font-size:10px;color:var(--accent);font-weight:700;min-width:18px;font-family:var(--mono)}
+.step-t{font-size:12.5px;color:#bfc7e0;line-height:1.5}
+.step-t.m{font-family:var(--mono);font-size:11.5px}
+
+/* BA II Plus steps */
+.ba-section{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.ba-hdr{font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ba-hdr::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.ba-step{display:flex;gap:8px;margin-bottom:5px;align-items:baseline}
+.ba-key{font-family:var(--mono);font-size:11px;color:var(--amber);font-weight:600;background:var(--amberDim);padding:1px 5px;border-radius:4px}
+.ba-txt{font-size:11.5px;color:var(--text2)}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:var(--surface);border-radius:var(--radiusSm);border:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3)}
+.legend-dot{width:7px;height:7px;border-radius:50%}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const CATS=[
+// ━━━━━━━━━━━━━━ CH 5: TVM ━━━━━━━━━━━━━━
+{id:"tvm",name:"Time Value of Money",ch:"Ch 5",icon:"⏳",formulas:[
+{id:"fv",name:"Future Value (Lump Sum)",formula:"FV = PV × (1 + r)ⁿ",desc:"What a present amount grows to at a given rate. Foundation of all finance.",ch:"5",ba:true,
+inputs:[{k:"pv",l:"Present Value ($)",ph:"1000"},{k:"r",l:"Interest Rate (%)",ph:"8"},{k:"n",l:"Number of Periods",ph:"10"}],
+calc:v=>{const r=v.r/100,res=v.pv*Math.pow(1+r,v.n);return{r:"$"+res.toFixed(2),
+s:[`Convert rate: ${v.r}% → ${r}`,`FV = $${v.pv} × (1 + ${r})^${v.n}`,`FV = $${v.pv} × ${Math.pow(1+r,v.n).toFixed(6)}`,`FV = $${res.toFixed(2)}`,`Interest earned: $${(res-v.pv).toFixed(2)}`],
+ba:[`[2ND] [CLR TVM]`,`N = ${v.n} → ENTER`,`I/Y = ${v.r} → ENTER`,`PV = -${v.pv} → ENTER  (negative = outflow)`,`PMT = 0 → ENTER`,`CPT FV → ${res.toFixed(2)}`]}}},
+{id:"pv",name:"Present Value (Lump Sum)",formula:"PV = FV / (1 + r)ⁿ",desc:"Discount a future cash flow back to today. The reverse of compounding.",ch:"5",ba:true,
+inputs:[{k:"fv",l:"Future Value ($)",ph:"10000"},{k:"r",l:"Discount Rate (%)",ph:"8"},{k:"n",l:"Number of Periods",ph:"10"}],
+calc:v=>{const r=v.r/100,res=v.fv/Math.pow(1+r,v.n);return{r:"$"+res.toFixed(2),
+s:[`Convert rate: ${v.r}% → ${r}`,`PV = $${v.fv} / (1 + ${r})^${v.n}`,`PV = $${res.toFixed(2)}`,`Discount amount: $${(v.fv-res).toFixed(2)}`],
+ba:[`[2ND] [CLR TVM]`,`N = ${v.n} → ENTER`,`I/Y = ${v.r} → ENTER`,`PMT = 0 → ENTER`,`FV = ${v.fv} → ENTER`,`CPT PV → -${res.toFixed(2)}`]}}},
+{id:"fva",name:"FV of Annuity (Ordinary)",formula:"FVA = PMT × [((1+r)ⁿ - 1) / r]",desc:"Future value of equal end-of-period payments. Retirement savings, 401k.",ch:"5",ba:true,
+inputs:[{k:"pmt",l:"Payment ($)",ph:"500"},{k:"r",l:"Rate (%)",ph:"6"},{k:"n",l:"Periods",ph:"20"}],
+calc:v=>{const r=v.r/100,f=(Math.pow(1+r,v.n)-1)/r,res=v.pmt*f;return{r:"$"+res.toFixed(2),
+s:[`Rate: ${r}`,`FV Factor = ((1+${r})^${v.n} - 1) / ${r} = ${f.toFixed(6)}`,`FVA = $${v.pmt} × ${f.toFixed(6)} = $${res.toFixed(2)}`,`Total contributed: $${(v.pmt*v.n).toFixed(2)} | Interest: $${(res-v.pmt*v.n).toFixed(2)}`],
+ba:[`[2ND] [CLR TVM]`,`Make sure END mode (no BGN indicator)`,`N = ${v.n} → ENTER`,`I/Y = ${v.r} → ENTER`,`PV = 0 → ENTER`,`PMT = -${v.pmt} → ENTER`,`CPT FV → ${res.toFixed(2)}`]}}},
+{id:"pva",name:"PV of Annuity (Ordinary)",formula:"PVA = PMT × [(1-(1+r)⁻ⁿ) / r]",desc:"Present value of equal future payments. Loan pricing, lease valuation.",ch:"5",ba:true,
+inputs:[{k:"pmt",l:"Payment ($)",ph:"1000"},{k:"r",l:"Rate (%)",ph:"5"},{k:"n",l:"Periods",ph:"10"}],
+calc:v=>{const r=v.r/100,f=(1-Math.pow(1+r,-v.n))/r,res=v.pmt*f;return{r:"$"+res.toFixed(2),
+s:[`Rate: ${r}`,`PV Factor = ${f.toFixed(6)}`,`PVA = $${v.pmt} × ${f.toFixed(6)} = $${res.toFixed(2)}`],
+ba:[`[2ND] [CLR TVM]`,`N = ${v.n} → ENTER`,`I/Y = ${v.r} → ENTER`,`PMT = -${v.pmt} → ENTER`,`FV = 0 → ENTER`,`CPT PV → ${res.toFixed(2)}`]}}},
+{id:"fvad",name:"FV of Annuity Due",formula:"FVA Due = PMT × [((1+r)ⁿ-1)/r] × (1+r)",desc:"Payments at BEGINNING of period. Rent, insurance, leases.",ch:"5",ba:true,
+inputs:[{k:"pmt",l:"Payment ($)",ph:"500"},{k:"r",l:"Rate (%)",ph:"6"},{k:"n",l:"Periods",ph:"20"}],
+calc:v=>{const r=v.r/100,f=((Math.pow(1+r,v.n)-1)/r)*(1+r),res=v.pmt*f;return{r:"$"+res.toFixed(2),
+s:[`Rate: ${r}`,`Due factor = ${f.toFixed(6)}`,`FVA Due = $${v.pmt} × ${f.toFixed(6)} = $${res.toFixed(2)}`],
+ba:[`[2ND] [CLR TVM]`,`[2ND] [BGN] [2ND] [SET] → shows BGN`,`N = ${v.n} → ENTER`,`I/Y = ${v.r} → ENTER`,`PV = 0 → ENTER`,`PMT = -${v.pmt} → ENTER`,`CPT FV → ${res.toFixed(2)}`,`[2ND] [BGN] [2ND] [SET] → back to END`]}}},
+{id:"pvad",name:"PV of Annuity Due",formula:"PVA Due = PMT × [(1-(1+r)⁻ⁿ)/r] × (1+r)",desc:"PV when payments at BEGINNING of period. Lease present value.",ch:"5",ba:true,
+inputs:[{k:"pmt",l:"Payment ($)",ph:"1000"},{k:"r",l:"Rate (%)",ph:"5"},{k:"n",l:"Periods",ph:"10"}],
+calc:v=>{const r=v.r/100,of=(1-Math.pow(1+r,-v.n))/r,f=of*(1+r),res=v.pmt*f;return{r:"$"+res.toFixed(2),
+s:[`Ordinary factor: ${of.toFixed(6)}`,`Due factor (×(1+r)): ${f.toFixed(6)}`,`PVA Due = $${res.toFixed(2)}`],
+ba:[`[2ND] [CLR TVM]`,`[2ND] [BGN] [2ND] [SET] → shows BGN`,`N = ${v.n} → ENTER`,`I/Y = ${v.r} → ENTER`,`PMT = -${v.pmt} → ENTER`,`FV = 0 → ENTER`,`CPT PV → ${res.toFixed(2)}`,`[2ND] [BGN] [2ND] [SET] → back to END`]}}},
+{id:"perp",name:"Perpetuity (No Growth)",formula:"PV = C / r",desc:"Infinite stream of equal payments. Preferred stock, consols.",ch:"5",
+inputs:[{k:"c",l:"Cash Flow / Payment ($)",ph:"5000"},{k:"r",l:"Rate (%)",ph:"8"}],
+calc:v=>{const r=v.r/100,res=v.c/r;return{r:"$"+res.toFixed(2),s:[`PV = $${v.c} / ${r} = $${res.toFixed(2)}`]}}},
+{id:"gperp",name:"Growing Perpetuity",formula:"PV = C₁ / (r - g)",desc:"Payments growing at constant rate forever. Foundation of Gordon Growth Model.",ch:"5",
+inputs:[{k:"c1",l:"Next Period Payment ($)",ph:"5000"},{k:"r",l:"Required Rate (%)",ph:"10"},{k:"g",l:"Growth Rate (%)",ph:"3"}],
+calc:v=>{const r=v.r/100,g=v.g/100;if(r<=g)return{r:"Error: r must > g",s:["r must be greater than g for convergence"]};const res=v.c1/(r-g);return{r:"$"+res.toFixed(2),s:[`PV = $${v.c1} / (${r} - ${g})`,`PV = $${v.c1} / ${(r-g).toFixed(4)} = $${res.toFixed(2)}`]}}},
+{id:"ear",name:"Effective Annual Rate (EAR)",formula:"EAR = (1 + r/m)ᵐ - 1",desc:"True annual rate accounting for compounding. Compare different APRs.",ch:"5",ba:true,
+inputs:[{k:"r",l:"Nominal/Stated Rate (APR %)",ph:"12"},{k:"m",l:"Compounding Periods/Year",ph:"12"}],
+calc:v=>{const r=v.r/100,ear=Math.pow(1+r/v.m,v.m)-1;return{r:(ear*100).toFixed(4)+"%",
+s:[`Periodic rate: ${r}/${v.m} = ${(r/v.m).toFixed(6)}`,`EAR = (1 + ${(r/v.m).toFixed(6)})^${v.m} - 1`,`EAR = ${(ear*100).toFixed(4)}%`,`Compounding adds: +${((ear-r)*100).toFixed(4)}%`],
+ba:[`[2ND] [ICONV]`,`NOM = ${v.r} → ENTER ↓`,`C/Y = ${v.m} → ENTER ↓`,`CPT EFF → ${(ear*100).toFixed(4)}%`]}}},
+{id:"pmt",name:"Loan Payment (Amortization)",formula:"PMT = PV × [r / (1-(1+r)⁻ⁿ)]",desc:"Periodic payment to fully pay off a loan. Mortgages, car loans.",ch:"5",ba:true,
+inputs:[{k:"pv",l:"Loan Amount ($)",ph:"250000"},{k:"r",l:"Annual Rate (%)",ph:"6.5"},{k:"n",l:"Total Payments",ph:"360"},{k:"m",l:"Payments/Year",ph:"12"}],
+calc:v=>{const pr=(v.r/100)/v.m,p=v.pv*(pr/(1-Math.pow(1+pr,-v.n))),tot=p*v.n;return{r:"$"+p.toFixed(2)+"/payment",
+s:[`Periodic rate: ${v.r}%/${v.m} = ${(pr*100).toFixed(4)}%`,`PMT = $${p.toFixed(2)}`,`Total paid over life: $${tot.toFixed(2)}`,`Total interest: $${(tot-v.pv).toFixed(2)}`],
+ba:[`[2ND] [CLR TVM]`,`Set P/Y = ${v.m}: [2ND] [P/Y] ${v.m} ENTER`,`N = ${v.n} → ENTER`,`I/Y = ${v.r} → ENTER (annual rate)`,`PV = ${v.pv} → ENTER`,`FV = 0 → ENTER`,`CPT PMT → -${p.toFixed(2)}`]}}}
+]},
+
+// ━━━━━━━━━━━━━━ CH 6: BONDS ━━━━━━━━━━━━━━
+{id:"bond",name:"Bond Securities",ch:"Ch 6",icon:"🏛",formulas:[
+{id:"bondprice",name:"Bond Pricing",formula:"P = Σ[C/(1+r)ᵗ] + F/(1+r)ⁿ",desc:"PV of all coupon payments + PV of face value. Premium/Discount/Par.",ch:"6",ba:true,
+inputs:[{k:"face",l:"Face Value ($)",ph:"1000"},{k:"coupon",l:"Coupon Rate (%)",ph:"5"},{k:"r",l:"YTM (%)",ph:"6"},{k:"n",l:"Years to Maturity",ph:"10"},{k:"freq",l:"Payments/Year",ph:"2"}],
+calc:v=>{const pc=(v.face*(v.coupon/100))/v.freq,pr=(v.r/100)/v.freq,tp=v.n*v.freq;let pvc=0;for(let t=1;t<=tp;t++)pvc+=pc/Math.pow(1+pr,t);const pvf=v.face/Math.pow(1+pr,tp),price=pvc+pvf;
+const status=price>v.face?"PREMIUM (coupon > YTM)":price<v.face?"DISCOUNT (coupon < YTM)":"PAR (coupon = YTM)";
+return{r:"$"+price.toFixed(2),
+s:[`Coupon payment: $${v.face} × ${v.coupon}% / ${v.freq} = $${pc.toFixed(2)}`,`Periodic YTM: ${v.r}% / ${v.freq} = ${(pr*100).toFixed(4)}%`,`Total periods: ${v.n} × ${v.freq} = ${tp}`,`PV of coupons: $${pvc.toFixed(2)}`,`PV of face value: $${pvf.toFixed(2)}`,`Bond Price: $${price.toFixed(2)}`,`Trading at ${status}`],
+ba:[`[2ND] [CLR TVM]`,`Set P/Y = ${v.freq}: [2ND] [P/Y] ${v.freq} ENTER`,`N = ${tp} → ENTER  (total periods)`,`I/Y = ${v.r} → ENTER  (annual YTM)`,`PMT = ${pc.toFixed(2)} → ENTER  (coupon per period)`,`FV = ${v.face} → ENTER  (face value)`,`CPT PV → -${price.toFixed(2)}`,`Negative sign = price you pay (outflow)`]}}},
+{id:"ytm",name:"Yield to Maturity (YTM)",formula:"Find r where: Price = Σ[C/(1+r)ᵗ] + F/(1+r)ⁿ",desc:"The discount rate that makes PV of all bond CFs equal to current price. Total return if held to maturity.",ch:"6",ba:true,
+inputs:[{k:"face",l:"Face Value ($)",ph:"1000"},{k:"coupon",l:"Coupon Rate (%)",ph:"5"},{k:"price",l:"Current Price ($)",ph:"950"},{k:"n",l:"Years to Maturity",ph:"10"},{k:"freq",l:"Payments/Year",ph:"2"}],
+calc:v=>{const pc=(v.face*(v.coupon/100))/v.freq,tp=v.n*v.freq;
+let lo=0.0001,hi=1;for(let i=0;i<300;i++){const m=(lo+hi)/2,pr=m/v.freq;let p=0;for(let t=1;t<=tp;t++)p+=pc/Math.pow(1+pr,t);p+=v.face/Math.pow(1+pr,tp);if(p>v.price)lo=m;else hi=m}
+const ytm=((lo+hi)/2)*100;
+return{r:ytm.toFixed(2)+"%",
+s:[`Coupon/period: $${pc.toFixed(2)}`,`Total periods: ${tp}`,`Solving for rate where PV = $${v.price}`,`YTM ≈ ${ytm.toFixed(2)}% (annual)`,`Periodic yield: ${(ytm/v.freq).toFixed(4)}%`,v.price<v.face?`Discount bond: YTM > coupon rate`:`Premium bond: YTM < coupon rate`],
+ba:[`[2ND] [CLR TVM]`,`Set P/Y = ${v.freq}: [2ND] [P/Y] ${v.freq} ENTER`,`N = ${tp} → ENTER`,`PV = -${v.price} → ENTER  (negative = you pay)`,`PMT = ${pc.toFixed(2)} → ENTER`,`FV = ${v.face} → ENTER`,`CPT I/Y → ${ytm.toFixed(2)}%  (annual YTM)`]}}},
+{id:"cyield",name:"Current Yield",formula:"CY = Annual Coupon / Price",desc:"Annual coupon income as % of price. Quick yield measure — ignores capital gains.",ch:"6",
+inputs:[{k:"face",l:"Face Value ($)",ph:"1000"},{k:"coupon",l:"Coupon Rate (%)",ph:"5"},{k:"price",l:"Current Price ($)",ph:"950"}],
+calc:v=>{const ann=v.face*(v.coupon/100),cy=(ann/v.price)*100;return{r:cy.toFixed(2)+"%",
+s:[`Annual coupon: $${v.face} × ${v.coupon}% = $${ann.toFixed(2)}`,`Current Yield = $${ann.toFixed(2)} / $${v.price} = ${cy.toFixed(2)}%`,`Note: Ignores capital gain/loss at maturity`,`For full return, use YTM instead`]}}},
+{id:"duration",name:"Macaulay Duration",formula:"D = Σ[t × PV(CFₜ)] / Price",desc:"Weighted-average time to receive bond's cash flows. Measures interest rate sensitivity.",ch:"6",ba:true,
+inputs:[{k:"face",l:"Face Value ($)",ph:"1000"},{k:"coupon",l:"Coupon Rate (%)",ph:"5"},{k:"r",l:"YTM (%)",ph:"6"},{k:"n",l:"Years to Maturity",ph:"10"},{k:"freq",l:"Payments/Year",ph:"2"}],
+calc:v=>{const pc=(v.face*(v.coupon/100))/v.freq,pr=(v.r/100)/v.freq,tp=v.n*v.freq;let price=0,wsum=0;
+for(let t=1;t<=tp;t++){const pvcf=pc/Math.pow(1+pr,t);price+=pvcf;wsum+=t*pvcf}
+const pvf=v.face/Math.pow(1+pr,tp);price+=pvf;wsum+=tp*pvf;
+const durPeriods=wsum/price,durYears=durPeriods/v.freq,modDur=durYears/(1+pr);
+return{r:durYears.toFixed(2)+" years",
+s:[`Bond price: $${price.toFixed(2)}`,`Macaulay Duration: ${durYears.toFixed(2)} years`,`Modified Duration: ${modDur.toFixed(2)}`,`If YTM ↑ 1%: Price ≈ ↓${(modDur*1).toFixed(2)}%`,`Higher duration = more interest rate risk`]}}}
+]},
+
+// ━━━━━━━━━━━━━━ CH 7: EQUITY VALUATION ━━━━━━━━━━━━━━
+{id:"equity",name:"Equity Valuation",ch:"Ch 7",icon:"📈",formulas:[
+{id:"ddm0",name:"Zero-Growth DDM (Perpetuity)",formula:"P₀ = D / r",desc:"Stock paying fixed dividend forever. Like preferred stock. Simplest DDM.",ch:"7",
+inputs:[{k:"d",l:"Annual Dividend ($)",ph:"3.00"},{k:"r",l:"Required Return (%)",ph:"8"}],
+calc:v=>{const r=v.r/100,res=v.d/r;return{r:"$"+res.toFixed(2),
+s:[`P₀ = $${v.d} / ${r}`,`P₀ = $${res.toFixed(2)}`,`No growth → straight perpetuity`,`Keyword: "indefinitely" + no growth mentioned`]}}},
+{id:"gordon",name:"Gordon Growth Model (Constant Growth)",formula:"P₀ = D₁ / (r - g)",desc:"Stock with dividends growing at constant rate forever. Most tested equity formula.",ch:"7",
+inputs:[{k:"d0",l:"Current Dividend D₀ ($) — leave 0 if giving D₁",ph:"2.00"},{k:"d1",l:"Next Dividend D₁ ($) — leave 0 if giving D₀",ph:"0"},{k:"r",l:"Required Return (%)",ph:"10"},{k:"g",l:"Growth Rate (%)",ph:"4"}],
+calc:v=>{const r=v.r/100,g=v.g/100;
+let d1=v.d1;
+let note="";
+if(v.d1>0){d1=v.d1;note="D₁ given directly (expected/next year dividend)"}
+else{d1=v.d0*(1+g);note=`D₁ = D₀ × (1+g) = $${v.d0} × ${1+g} = $${d1.toFixed(4)}`}
+if(r<=g)return{r:"Error: r must > g",s:["Required return must exceed growth rate"]};
+const p=d1/(r-g);
+return{r:"$"+p.toFixed(2),
+s:[note,`P₀ = $${d1.toFixed(2)} / (${r} - ${g})`,`P₀ = $${d1.toFixed(2)} / ${(r-g).toFixed(4)}`,`P₀ = $${p.toFixed(2)}`,`Div yield: ${((d1/p)*100).toFixed(2)}% | Cap gains yield: ${v.g}%`,`⚠️ "Just paid"/"current" = D₀ → grow it`,`⚠️ "Expected"/"next year" = D₁ → plug direct`]}}},
+{id:"finite",name:"Finite Holding Period",formula:"P₀ = Σ[Dₜ/(1+r)ᵗ] + Pₙ/(1+r)ⁿ",desc:"Stock held for a finite period then sold. Discount dividends + sale price.",ch:"7",ba:true,
+inputs:[{k:"divs",l:"Dividends each year (comma-sep)",ph:"3,3,3",type:"text"},{k:"pn",l:"Sale Price at end ($)",ph:"81"},{k:"r",l:"Required Return (%)",ph:"10"}],
+calc:v=>{const r=v.r/100,divs=String(v.divs).split(",").map(x=>parseFloat(x.trim()));
+const n=divs.length;let pvTotal=0;const s=[];
+divs.forEach((d,i)=>{const pv=d/Math.pow(1+r,i+1);pvTotal+=pv;s.push(`Yr ${i+1} div: $${d} / (1+${r})^${i+1} = $${pv.toFixed(2)}`)});
+const pvSale=v.pn/Math.pow(1+r,n);pvTotal+=pvSale;
+s.push(`Sale: $${v.pn} / (1+${r})^${n} = $${pvSale.toFixed(2)}`);
+s.push(`P₀ = $${pvTotal.toFixed(2)}`);
+// Build CF list for BA steps
+const cfs=divs.map((d,i)=>i===n-1?d+v.pn:d);
+return{r:"$"+pvTotal.toFixed(2),s,
+ba:[`[CF] [2ND] [CLR WORK]`,`CF0 = 0 → ENTER ↓`,...cfs.map((cf,i)=>`C0${i+1} = ${cf} → ENTER ↓ | F0${i+1} = 1 → ENTER ↓`),`[NPV]`,`I = ${v.r} → ENTER ↓`,`CPT → NPV = ${pvTotal.toFixed(2)}`]}}},
+{id:"nonconstant",name:"Non-Constant (Supernormal) Growth",formula:"P₀ = Σ[Dₜ/(1+r)ᵗ] + Pₙ/(1+r)ⁿ",desc:"Different growth rates across stages, then constant growth. 2-stage DDM. Heavy exam topic.",ch:"7",ba:true,
+inputs:[{k:"d0",l:"Current Dividend D₀ ($)",ph:"2.00"},{k:"rates",l:"Growth rates by year % (comma-sep)",ph:"20,20,20",type:"text"},{k:"glong",l:"Long-run constant growth (%)",ph:"5"},{k:"r",l:"Required Return (%)",ph:"12"}],
+calc:v=>{const r=v.r/100,glong=v.glong/100,rates=String(v.rates).split(",").map(x=>parseFloat(x.trim())/100);
+let d=v.d0;const divs=[];const s=[];
+rates.forEach((g,i)=>{d=d*(1+g);divs.push(d);s.push(`D${i+1} = D${i} × (1+${(g*100).toFixed(1)}%) = $${d.toFixed(4)}`)});
+const dn1=d*(1+glong);s.push(`D${rates.length+1} = $${d.toFixed(4)} × (1+${(glong*100)}%) = $${dn1.toFixed(4)} (for terminal)`);
+const termP=dn1/(r-glong);s.push(`Terminal Price P${rates.length} = $${dn1.toFixed(4)} / (${(r*100)}% - ${(glong*100)}%) = $${termP.toFixed(2)}`);
+let pvTotal=0;const cfs=[];
+divs.forEach((dd,i)=>{const pv=dd/Math.pow(1+r,i+1);pvTotal+=pv;cfs.push(dd)});
+const pvTerm=termP/Math.pow(1+r,rates.length);pvTotal+=pvTerm;
+cfs[cfs.length-1]+=termP;
+s.push(`PV of dividends + terminal: $${pvTotal.toFixed(2)}`);
+return{r:"$"+pvTotal.toFixed(2),s,
+ba:[`[CF] [2ND] [CLR WORK]`,`CF0 = 0 → ENTER ↓`,...cfs.map((cf,i)=>`C0${i+1} = ${cf.toFixed(2)} → ENTER ↓ | F0${i+1} = 1 → ENTER ↓`),`Note: Last CF includes div + terminal price`,`[NPV]`,`I = ${v.r*100} → ENTER ↓`,`CPT → NPV = ${pvTotal.toFixed(2)}`]}}},
+{id:"pe",name:"P/E Valuation",formula:"Price = EPS × P/E Multiple",desc:"Relative valuation using earnings. Compare to peers / industry average.",ch:"7",
+inputs:[{k:"eps",l:"Earnings Per Share ($)",ph:"4.50"},{k:"pe",l:"P/E Multiple",ph:"18"}],
+calc:v=>{const price=v.eps*v.pe;return{r:"$"+price.toFixed(2),
+s:[`Price = $${v.eps} × ${v.pe}x = $${price.toFixed(2)}`,`Higher P/E = market expects more growth`,`Compare to industry P/E for relative value`]}}},
+{id:"ps",name:"P/S Valuation",formula:"Price = Sales/Share × P/S Multiple",desc:"Relative valuation using revenue. Useful for unprofitable high-growth firms.",ch:"7",
+inputs:[{k:"sps",l:"Sales Per Share ($)",ph:"25"},{k:"ps",l:"P/S Multiple",ph:"3.5"}],
+calc:v=>{const price=v.sps*v.ps;return{r:"$"+price.toFixed(2),
+s:[`Price = $${v.sps} × ${v.ps}x = $${price.toFixed(2)}`,`P/S useful when earnings are negative`,`Lower P/S = potentially undervalued`]}}},
+{id:"growthrate",name:"Sustainable Growth Rate",formula:"g = ROE × b  (b = retention ratio)",desc:"Internal growth rate of dividends. Retention ratio = 1 - payout ratio.",ch:"7",
+inputs:[{k:"roe",l:"ROE (%)",ph:"15"},{k:"payout",l:"Payout Ratio (%)",ph:"40"}],
+calc:v=>{const b=1-v.payout/100,g=(v.roe/100)*b*100;return{r:"g = "+g.toFixed(2)+"%",
+s:[`Retention ratio b = 1 - ${v.payout}% = ${(b*100).toFixed(1)}%`,`g = ROE × b = ${v.roe}% × ${(b*100).toFixed(1)}%`,`g = ${g.toFixed(2)}%`,`This is the max growth rate without issuing new equity`,`Plug this g into Gordon Growth Model`]}}},
+{id:"divyield",name:"Dividend Yield & Capital Gains",formula:"r = Div Yield + Capital Gains Yield",desc:"Total return = income return + price appreciation. Components of required return.",ch:"7",
+inputs:[{k:"d1",l:"Expected Dividend D₁ ($)",ph:"2.10"},{k:"p0",l:"Current Price ($)",ph:"42"},{k:"g",l:"Growth Rate (%)",ph:"5"}],
+calc:v=>{const dy=(v.d1/v.p0)*100,cgy=v.g,total=dy+cgy;return{r:"Total: "+total.toFixed(2)+"%",
+s:[`Dividend Yield = D₁/P₀ = $${v.d1}/$${v.p0} = ${dy.toFixed(2)}%`,`Capital Gains Yield = g = ${cgy}%`,`Total Return = ${dy.toFixed(2)}% + ${cgy}% = ${total.toFixed(2)}%`,`In constant growth: Div Yield + g = r`]}}}
+]},
+
+// ━━━━━━━━━━━━━━ CH 8: RISK & RETURN ━━━━━━━━━━━━━━
+{id:"risk",name:"Risk & Return",ch:"Ch 8",icon:"⚖️",formulas:[
+{id:"expret",name:"Expected Return (Probability)",formula:"E(R) = Σ pᵢ × Rᵢ",desc:"Probability-weighted average of all possible returns. Foundation of risk analysis.",ch:"8",
+inputs:[{k:"probs",l:"Probabilities (comma-sep, sum to 1)",ph:"0.20,0.50,0.30",type:"text"},{k:"rets",l:"Returns % (comma-sep)",ph:"-5,10,25",type:"text"}],
+calc:v=>{const p=String(v.probs).split(",").map(Number),r=String(v.rets).split(",").map(Number);
+const er=p.reduce((s,pi,i)=>s+pi*r[i],0);
+const s=p.map((pi,i)=>`${(pi*100).toFixed(0)}% × ${r[i]}% = ${(pi*r[i]).toFixed(2)}%`);
+s.push(`E(R) = ${er.toFixed(2)}%`);
+return{r:er.toFixed(2)+"%",s}}},
+{id:"stddev",name:"Standard Deviation (Probability)",formula:"σ = √[Σ pᵢ(Rᵢ - E(R))²]",desc:"Risk measure — dispersion of returns around expected value. Higher = riskier.",ch:"8",
+inputs:[{k:"probs",l:"Probabilities (comma-sep)",ph:"0.20,0.50,0.30",type:"text"},{k:"rets",l:"Returns % (comma-sep)",ph:"-5,10,25",type:"text"}],
+calc:v=>{const p=String(v.probs).split(",").map(Number),r=String(v.rets).split(",").map(Number);
+const er=p.reduce((s,pi,i)=>s+pi*r[i],0);
+const variance=p.reduce((s,pi,i)=>s+pi*Math.pow(r[i]-er,2),0);
+const sd=Math.sqrt(variance);
+const s=[`E(R) = ${er.toFixed(2)}%`,...p.map((pi,i)=>`${(pi*100)}% × (${r[i]}% - ${er.toFixed(2)}%)² = ${(pi*Math.pow(r[i]-er,2)).toFixed(4)}`),`Variance = ${variance.toFixed(4)}`,`σ = √${variance.toFixed(4)} = ${sd.toFixed(2)}%`];
+return{r:"σ = "+sd.toFixed(2)+"%",s}}},
+{id:"cv",name:"Coefficient of Variation",formula:"CV = σ / E(R)",desc:"Risk per unit of return. Use to compare assets with different expected returns.",ch:"8",
+inputs:[{k:"sd",l:"Standard Deviation (%)",ph:"15"},{k:"er",l:"Expected Return (%)",ph:"10"}],
+calc:v=>{const cv=v.sd/v.er;return{r:"CV = "+cv.toFixed(4),
+s:[`CV = ${v.sd}% / ${v.er}% = ${cv.toFixed(4)}`,`Lower CV = better risk-return tradeoff`,`Use CV to compare assets with different E(R)`]}}},
+{id:"capm",name:"CAPM",formula:"Rₑ = Rf + β(Rm - Rf)",desc:"Expected return based on systematic risk. Core of modern finance.",ch:"8",
+inputs:[{k:"rf",l:"Risk-Free Rate (%)",ph:"4.5"},{k:"beta",l:"Beta (β)",ph:"1.2"},{k:"rm",l:"Market Return (%)",ph:"10"}],
+calc:v=>{const re=v.rf+v.beta*(v.rm-v.rf),mp=v.rm-v.rf,rp=v.beta*mp;
+return{r:re.toFixed(2)+"%",
+s:[`Market Risk Premium = ${v.rm}% - ${v.rf}% = ${mp.toFixed(2)}%`,`Stock Risk Premium = ${v.beta} × ${mp.toFixed(2)}% = ${rp.toFixed(2)}%`,`Rₑ = ${v.rf}% + ${rp.toFixed(2)}% = ${re.toFixed(2)}%`,v.beta>1?"β > 1: More volatile than market":v.beta<1?"β < 1: Less volatile than market":"β = 1: Same as market",`Systematic risk only — diversifiable risk not rewarded`]}}},
+{id:"portret",name:"Portfolio Expected Return",formula:"E(Rp) = Σ wᵢ × E(Rᵢ)",desc:"Weighted average of individual asset returns. Simple additive.",ch:"8",
+inputs:[{k:"weights",l:"Weights (comma-sep, sum to 1)",ph:"0.60,0.40",type:"text"},{k:"returns",l:"Returns % (comma-sep)",ph:"12,7",type:"text"}],
+calc:v=>{const w=String(v.weights).split(",").map(Number),r=String(v.returns).split(",").map(Number);
+const pr=w.reduce((s,wi,i)=>s+wi*r[i],0);
+const s=w.map((wi,i)=>`${(wi*100).toFixed(0)}% × ${r[i]}% = ${(wi*r[i]).toFixed(2)}%`);
+s.push(`E(Rp) = ${pr.toFixed(2)}%`);return{r:pr.toFixed(2)+"%",s}}},
+{id:"portsd",name:"Portfolio Std Dev (2-Asset)",formula:"σp = √[w₁²σ₁² + w₂²σ₂² + 2w₁w₂σ₁σ₂ρ₁₂]",desc:"Portfolio risk — depends on correlation! ρ < 1 = diversification benefit.",ch:"8",
+inputs:[{k:"w1",l:"Weight Asset 1",ph:"0.60"},{k:"w2",l:"Weight Asset 2",ph:"0.40"},{k:"s1",l:"Std Dev Asset 1 (%)",ph:"20"},{k:"s2",l:"Std Dev Asset 2 (%)",ph:"15"},{k:"rho",l:"Correlation (ρ₁₂)",ph:"0.30"}],
+calc:v=>{const var1=Math.pow(v.w1*v.s1,2),var2=Math.pow(v.w2*v.s2,2),cov=2*v.w1*v.w2*v.s1*v.s2*v.rho;
+const portVar=var1+var2+cov,portSD=Math.sqrt(portVar);
+const wavg=v.w1*v.s1+v.w2*v.s2;
+return{r:"σp = "+portSD.toFixed(2)+"%",
+s:[`w₁²σ₁² = (${v.w1})²(${v.s1})² = ${var1.toFixed(4)}`,`w₂²σ₂² = (${v.w2})²(${v.s2})² = ${var2.toFixed(4)}`,`2w₁w₂σ₁σ₂ρ = ${cov.toFixed(4)}`,`Portfolio Variance = ${portVar.toFixed(4)}`,`σp = ${portSD.toFixed(2)}%`,`Weighted avg σ (no diversification): ${wavg.toFixed(2)}%`,`Diversification benefit: ${(wavg-portSD).toFixed(2)}%`,v.rho<1?"ρ < 1 → Diversification works!":"ρ = 1 → No diversification benefit"]}}},
+{id:"betacalc",name:"Beta Calculation",formula:"β = Cov(Ri,Rm) / Var(Rm)",desc:"Systematic risk measure. Slope of Security Characteristic Line (SCL).",ch:"8",
+inputs:[{k:"cov",l:"Covariance (Ri, Rm)",ph:"0.0035"},{k:"varm",l:"Variance of Market",ph:"0.0025"}],
+calc:v=>{const beta=v.cov/v.varm;return{r:"β = "+beta.toFixed(4),
+s:[`β = Cov(Ri,Rm) / Var(Rm)`,`β = ${v.cov} / ${v.varm} = ${beta.toFixed(4)}`,beta>1?"Aggressive — amplifies market moves":beta<1&&beta>0?"Defensive — dampens market moves":"Negative beta — moves opposite to market"]}}},
+{id:"sharpe",name:"Sharpe Ratio",formula:"S = (Rp - Rf) / σp",desc:"Excess return per unit of TOTAL risk. >1 good, >2 great.",ch:"8",
+inputs:[{k:"rp",l:"Portfolio Return (%)",ph:"12"},{k:"rf",l:"Risk-Free Rate (%)",ph:"4.5"},{k:"sigma",l:"Std Dev (%)",ph:"15"}],
+calc:v=>{const s=(v.rp-v.rf)/v.sigma;return{r:s.toFixed(4),
+s:[`Excess return = ${v.rp}% - ${v.rf}% = ${(v.rp-v.rf).toFixed(2)}%`,`Sharpe = ${(v.rp-v.rf).toFixed(2)}% / ${v.sigma}% = ${s.toFixed(4)}`,s>2?"Excellent":s>1?"Good":s>0?"Positive but modest":"⚠️ Below risk-free rate"]}}},
+{id:"treynor",name:"Treynor Ratio",formula:"T = (Rp - Rf) / βp",desc:"Excess return per unit of SYSTEMATIC risk. For diversified portfolios.",ch:"8",
+inputs:[{k:"rp",l:"Portfolio Return (%)",ph:"14"},{k:"rf",l:"Risk-Free Rate (%)",ph:"4.5"},{k:"beta",l:"Portfolio Beta",ph:"1.2"}],
+calc:v=>{const t=(v.rp-v.rf)/v.beta;return{r:t.toFixed(4),
+s:[`Excess return: ${(v.rp-v.rf).toFixed(2)}%`,`Treynor = ${(v.rp-v.rf).toFixed(2)}% / ${v.beta} = ${t.toFixed(4)}`,`Higher = better per-unit systematic risk return`,`Use Sharpe for total risk, Treynor for β risk`]}}},
+{id:"jensen",name:"Jensen's Alpha",formula:"α = Rp - [Rf + β(Rm - Rf)]",desc:"Manager skill. Actual return minus CAPM-expected return. Positive α = outperformance.",ch:"8",
+inputs:[{k:"rp",l:"Portfolio Return (%)",ph:"14"},{k:"rf",l:"Risk-Free Rate (%)",ph:"4.5"},{k:"beta",l:"Beta",ph:"1.1"},{k:"rm",l:"Market Return (%)",ph:"10"}],
+calc:v=>{const exp=v.rf+v.beta*(v.rm-v.rf),alpha=v.rp-exp;return{r:"α = "+alpha.toFixed(2)+"%",
+s:[`CAPM Expected: ${v.rf}% + ${v.beta}(${v.rm}%-${v.rf}%) = ${exp.toFixed(2)}%`,`Actual: ${v.rp}%`,`Alpha = ${v.rp}% - ${exp.toFixed(2)}% = ${alpha.toFixed(2)}%`,alpha>0?"✅ Positive alpha — manager adds value":"❌ Negative alpha — underperforming vs CAPM"]}}}
+]},
+
+// ━━━━━━━━━━━━━━ CH 9: COST OF CAPITAL & BUDGETING ━━━━━━━━━━━━━━
+{id:"coc",name:"Cost of Capital & Budgeting",ch:"Ch 9",icon:"🏦",formulas:[
+{id:"wacc",name:"WACC",formula:"WACC = (E/V)×Rₑ + (D/V)×Rd×(1-T)",desc:"Weighted average cost of capital — the HURDLE RATE. Projects must beat this.",ch:"9",
+inputs:[{k:"e",l:"Equity Value ($)",ph:"600000000"},{k:"d",l:"Debt Value ($)",ph:"400000000"},{k:"re",l:"Cost of Equity (%)",ph:"12"},{k:"rd",l:"Cost of Debt (%)",ph:"6"},{k:"t",l:"Tax Rate (%)",ph:"21"}],
+calc:v=>{const V=v.e+v.d,we=v.e/V,wd=v.d/V,atd=(v.rd/100)*(1-v.t/100),wacc=we*(v.re/100)+wd*atd;
+return{r:(wacc*100).toFixed(2)+"%",
+s:[`Total Value V = $${V.toLocaleString()}`,`Equity weight: ${(we*100).toFixed(2)}%`,`Debt weight: ${(wd*100).toFixed(2)}%`,`After-tax cost of debt: ${v.rd}% × (1-${v.t}%) = ${(atd*100).toFixed(2)}%`,`WACC = ${(we*100).toFixed(2)}%×${v.re}% + ${(wd*100).toFixed(2)}%×${(atd*100).toFixed(2)}%`,`WACC = ${(wacc*100).toFixed(2)}%`,`Projects with IRR > ${(wacc*100).toFixed(2)}% create value`]}}},
+{id:"costpref",name:"Cost of Preferred Stock",formula:"Rp = Dp / P₀",desc:"Required return on preferred stock. Fixed dividend ÷ price. No tax benefit.",ch:"9",
+inputs:[{k:"dp",l:"Preferred Dividend ($)",ph:"5.00"},{k:"p0",l:"Price of Preferred ($)",ph:"50"}],
+calc:v=>{const rp=(v.dp/v.p0)*100;return{r:rp.toFixed(2)+"%",
+s:[`Rp = $${v.dp} / $${v.p0} = ${rp.toFixed(2)}%`,`No growth — preferred pays fixed dividend`,`No tax deduction (unlike debt interest)`,`Goes into WACC as a third component if applicable`]}}},
+{id:"atcod",name:"After-Tax Cost of Debt",formula:"Rd(AT) = Rd × (1 - T)",desc:"True cost of debt after interest tax shield. Interest is tax-deductible.",ch:"9",
+inputs:[{k:"rd",l:"Pre-Tax Cost of Debt (%)",ph:"6"},{k:"t",l:"Tax Rate (%)",ph:"21"}],
+calc:v=>{const res=v.rd*(1-v.t/100);return{r:res.toFixed(2)+"%",
+s:[`AT Cost = ${v.rd}% × (1 - ${v.t}%)`,`AT Cost = ${v.rd}% × ${(1-v.t/100).toFixed(2)} = ${res.toFixed(2)}%`,`Tax shield saves: ${(v.rd-res).toFixed(2)}% per year`]}}},
+{id:"npv",name:"Net Present Value (NPV)",formula:"NPV = -C₀ + Σ [CFₜ/(1+r)ᵗ]",desc:"Gold standard of capital budgeting. NPV > 0 = accept, creates shareholder value.",ch:"9",ba:true,
+inputs:[{k:"c0",l:"Initial Investment ($)",ph:"100000"},{k:"r",l:"Discount Rate / WACC (%)",ph:"10"},{k:"cfs",l:"Cash Flows by year (comma-sep)",ph:"30000,35000,40000,45000,50000",type:"text"}],
+calc:v=>{const r=v.r/100,flows=String(v.cfs).split(",").map(x=>parseFloat(x.trim()));
+let pv=0;const s=[`Initial investment: -$${v.c0.toLocaleString()}`];
+flows.forEach((cf,i)=>{const p=cf/Math.pow(1+r,i+1);pv+=p;s.push(`Yr ${i+1}: $${cf.toLocaleString()}/(1.${(v.r*1).toFixed(0).padStart(2,'0')})^${i+1} = $${p.toFixed(2)}`)});
+const npv=-v.c0+pv;s.push(`Sum of PVs: $${pv.toFixed(2)}`);s.push(`NPV = -$${v.c0.toLocaleString()} + $${pv.toFixed(2)} = $${npv.toFixed(2)}`);
+s.push(npv>0?"✅ ACCEPT — creates value":"❌ REJECT — destroys value");
+return{r:"$"+npv.toFixed(2),s,
+ba:[`[CF] [2ND] [CLR WORK]`,`CF0 = -${v.c0} → ENTER ↓`,...flows.map((cf,i)=>`C0${i+1} = ${cf} → ENTER ↓ | F0${i+1} = 1 → ENTER ↓`),`[NPV]`,`I = ${v.r} → ENTER ↓`,`CPT → NPV = ${npv.toFixed(2)}`]}}},
+{id:"irr",name:"Internal Rate of Return (IRR)",formula:"Find r where NPV = 0",desc:"Rate that makes NPV = 0. Compare to WACC: IRR > WACC → Accept.",ch:"9",ba:true,
+inputs:[{k:"c0",l:"Initial Investment ($)",ph:"100000"},{k:"cfs",l:"Cash Flows (comma-sep)",ph:"30000,35000,40000,45000,50000",type:"text"}],
+calc:v=>{const flows=[-v.c0,...String(v.cfs).split(",").map(x=>parseFloat(x.trim()))];
+let lo=-.5,hi=5;for(let i=0;i<300;i++){const m=(lo+hi)/2;let npv=0;flows.forEach((cf,t)=>{npv+=cf/Math.pow(1+m,t)});if(npv>0)lo=m;else hi=m}
+const irr=((lo+hi)/2)*100;
+return{r:irr.toFixed(2)+"%",
+s:[`Cash flows: [${flows.map(f=>f.toFixed(0)).join(", ")}]`,`IRR ≈ ${irr.toFixed(2)}%`,`Decision: IRR > WACC → Accept`,`IRR = the rate that makes NPV = $0`],
+ba:[`[CF] [2ND] [CLR WORK]`,`CF0 = -${v.c0} → ENTER ↓`,...String(v.cfs).split(",").map((cf,i)=>`C0${i+1} = ${cf.trim()} → ENTER ↓ | F0${i+1} = 1 → ENTER ↓`),`[IRR] CPT → ${irr.toFixed(2)}%`]}}},
+{id:"pi",name:"Profitability Index (PI)",formula:"PI = PV of CFs / Initial Investment",desc:"Benefit-cost ratio. PI > 1 = accept. Best for capital rationing decisions.",ch:"9",
+inputs:[{k:"c0",l:"Initial Investment ($)",ph:"100000"},{k:"r",l:"Discount Rate (%)",ph:"10"},{k:"cfs",l:"Cash Flows (comma-sep)",ph:"30000,35000,40000,45000,50000",type:"text"}],
+calc:v=>{const r=v.r/100,flows=String(v.cfs).split(",").map(x=>parseFloat(x.trim()));
+let pv=0;flows.forEach((cf,i)=>{pv+=cf/Math.pow(1+r,i+1)});const pi=pv/v.c0;
+return{r:pi.toFixed(4),
+s:[`PV of future CFs = $${pv.toFixed(2)}`,`PI = $${pv.toFixed(2)} / $${v.c0} = ${pi.toFixed(4)}`,pi>1?`✅ PI > 1 → Creates $${(pi-1).toFixed(4)} per $1 invested`:`❌ PI < 1 → Reject`,`NPV = $${(pv-v.c0).toFixed(2)}`]}}},
+{id:"payback",name:"Payback Period",formula:"Find t where cumulative CF ≥ Investment",desc:"Time to recoup investment. Simple but ignores TVM and post-payback cash flows.",ch:"9",
+inputs:[{k:"c0",l:"Initial Investment ($)",ph:"100000"},{k:"cfs",l:"Cash Flows (comma-sep)",ph:"25000,35000,30000,40000,50000",type:"text"}],
+calc:v=>{const flows=String(v.cfs).split(",").map(x=>parseFloat(x.trim()));let cum=0;const s=[];
+for(let i=0;i<flows.length;i++){cum+=flows[i];s.push(`Yr ${i+1}: $${flows[i].toLocaleString()} | Cumulative: $${cum.toLocaleString()}`);
+if(cum>=v.c0){const prev=cum-flows[i];const frac=(v.c0-prev)/flows[i];const pb=i+frac;s.push(`Payback = ${i} + ($${(v.c0-prev).toLocaleString()} / $${flows[i].toLocaleString()}) = ${pb.toFixed(2)} years`);
+s.push(`⚠️ Ignores TVM — not a DCF metric`);return{r:pb.toFixed(2)+" years",s}}}
+s.push("Investment not recovered within forecast");return{r:"N/A",s}}},
+{id:"anpv",name:"Annualized NPV (ANPV)",formula:"ANPV = NPV / PVA Factor",desc:"Compare projects with UNEQUAL LIVES. Converts NPV to equivalent annual amount.",ch:"9",ba:true,
+inputs:[{k:"npv",l:"NPV of Project ($)",ph:"50000"},{k:"r",l:"Discount Rate (%)",ph:"10"},{k:"n",l:"Project Life (years)",ph:"5"}],
+calc:v=>{const r=v.r/100,pvaFactor=(1-Math.pow(1+r,-v.n))/r,anpv=v.npv/pvaFactor;
+return{r:"$"+anpv.toFixed(2)+"/yr",
+s:[`PVA Factor = [1-(1+${r})^-${v.n}] / ${r} = ${pvaFactor.toFixed(6)}`,`ANPV = $${v.npv.toLocaleString()} / ${pvaFactor.toFixed(6)}`,`ANPV = $${anpv.toFixed(2)} per year`,`Compare ANPVs across projects with different lives`,`Higher ANPV = better project`],
+ba:[`First compute NPV using CF worksheet`,`Then annualize:`,`[2ND] [CLR TVM]`,`N = ${v.n} → ENTER`,`I/Y = ${v.r} → ENTER`,`PV = -${v.npv} → ENTER  (NPV as PV)`,`FV = 0 → ENTER`,`CPT PMT → ${anpv.toFixed(2)}`]}}},
+{id:"mirr",name:"Modified IRR (MIRR)",formula:"MIRR = (FV inflows / PV outflows)^(1/n) - 1",desc:"Fixes IRR reinvestment assumption. Uses WACC for reinvestment rate.",ch:"9",ba:true,
+inputs:[{k:"c0",l:"Initial Investment ($)",ph:"100000"},{k:"cfs",l:"Cash Flows (comma-sep)",ph:"30000,35000,40000,45000,50000",type:"text"},{k:"fr",l:"Finance Rate (%)",ph:"8"},{k:"rr",l:"Reinvestment Rate (%)",ph:"10"}],
+calc:v=>{const flows=String(v.cfs).split(",").map(x=>parseFloat(x.trim())),n=flows.length,rr=v.rr/100;
+let fvPos=0,pvNeg=v.c0;
+flows.forEach((cf,i)=>{if(cf>=0)fvPos+=cf*Math.pow(1+rr,n-1-i);else pvNeg+=Math.abs(cf)/Math.pow(1+v.fr/100,i+1)});
+const mirr=(Math.pow(fvPos/pvNeg,1/n)-1)*100;
+return{r:mirr.toFixed(2)+"%",
+s:[`FV of inflows (at ${v.rr}%): $${fvPos.toFixed(2)}`,`PV of outflows: $${pvNeg.toFixed(2)}`,`MIRR = ($${fvPos.toFixed(2)}/$${pvNeg.toFixed(2)})^(1/${n}) - 1`,`MIRR = ${mirr.toFixed(2)}%`,`More realistic than IRR — doesn't assume reinvest at IRR`],
+ba:[`Calculate FV of inflows manually at reinvestment rate`,`Then:`,`[2ND] [CLR TVM]`,`N = ${n} → ENTER`,`PV = -${pvNeg.toFixed(2)} → ENTER`,`FV = ${fvPos.toFixed(2)} → ENTER`,`PMT = 0 → ENTER`,`CPT I/Y → ${mirr.toFixed(2)}%`]}}}
+]},
+
+// ━━━━━━━━━━━━━━ RATIOS & ANALYSIS ━━━━━━━━━━━━━━
+{id:"ratios",name:"Ratios & Analysis",ch:"Ch 3-4",icon:"📊",formulas:[
+{id:"roe",name:"Return on Equity (ROE)",formula:"ROE = Net Income / Equity",desc:"Profitability per dollar of equity. The headline metric for management effectiveness.",ch:"3",
+inputs:[{k:"ni",l:"Net Income ($)",ph:"500000"},{k:"eq",l:"Shareholders' Equity ($)",ph:"2500000"}],
+calc:v=>{const r=(v.ni/v.eq)*100;return{r:r.toFixed(2)+"%",
+s:[`ROE = $${v.ni.toLocaleString()} / $${v.eq.toLocaleString()} = ${r.toFixed(2)}%`,r>15?"Strong — above 15% benchmark":"Below 15% — decompose with DuPont"]}}},
+{id:"dupont",name:"DuPont Analysis (3-Factor)",formula:"ROE = Margin × Turnover × Leverage",desc:"Decomposes ROE to find WHERE returns come from. Profit? Efficiency? Leverage?",ch:"3",
+inputs:[{k:"ni",l:"Net Income ($)",ph:"500000"},{k:"rev",l:"Revenue ($)",ph:"5000000"},{k:"assets",l:"Total Assets ($)",ph:"4000000"},{k:"equity",l:"Equity ($)",ph:"2500000"}],
+calc:v=>{const m=v.ni/v.rev,t=v.rev/v.assets,l=v.assets/v.equity,roe=m*t*l*100;
+return{r:"ROE = "+roe.toFixed(2)+"%",
+s:[`Profit Margin: $${v.ni}/$${v.rev} = ${(m*100).toFixed(2)}%`,`Asset Turnover: $${v.rev}/$${v.assets} = ${t.toFixed(2)}x`,`Equity Multiplier: $${v.assets}/$${v.equity} = ${l.toFixed(2)}x`,`ROE = ${(m*100).toFixed(2)}% × ${t.toFixed(2)} × ${l.toFixed(2)} = ${roe.toFixed(2)}%`]}}},
+{id:"cr",name:"Current Ratio",formula:"Current Ratio = CA / CL",desc:"Short-term solvency. Can the firm meet near-term obligations?",ch:"3",
+inputs:[{k:"ca",l:"Current Assets ($)",ph:"500000"},{k:"cl",l:"Current Liabilities ($)",ph:"300000"}],
+calc:v=>{const r=v.ca/v.cl;return{r:r.toFixed(2),
+s:[`Current Ratio = ${r.toFixed(2)}`,r>=2?"Strong liquidity":r>=1?"Adequate":"⚠️ Liquidity risk"]}}},
+{id:"de",name:"Debt-to-Equity Ratio",formula:"D/E = Total Debt / Equity",desc:"Financial leverage. Higher D/E = more risk, potentially amplified returns.",ch:"3",
+inputs:[{k:"debt",l:"Total Debt ($)",ph:"1500000"},{k:"equity",l:"Equity ($)",ph:"2500000"}],
+calc:v=>{const r=v.debt/v.equity;return{r:r.toFixed(2),
+s:[`D/E = ${r.toFixed(2)}`,`$${r.toFixed(2)} debt per $1 equity`,r>2?"⚠️ Highly leveraged":r>1?"Moderate leverage":"Conservative"]}}},
+{id:"roic",name:"ROIC",formula:"ROIC = NOPAT / Invested Capital",desc:"The ultimate value metric. ROIC > WACC = creating shareholder value.",ch:"4",
+inputs:[{k:"ebit",l:"EBIT ($)",ph:"1500000"},{k:"t",l:"Tax Rate (%)",ph:"21"},{k:"ic",l:"Invested Capital ($)",ph:"8000000"}],
+calc:v=>{const nopat=v.ebit*(1-v.t/100),roic=(nopat/v.ic)*100;return{r:roic.toFixed(2)+"%",
+s:[`NOPAT = EBIT × (1-T) = $${v.ebit.toLocaleString()} × ${(1-v.t/100).toFixed(2)} = $${nopat.toFixed(2)}`,`ROIC = $${nopat.toFixed(2)} / $${v.ic.toLocaleString()} = ${roic.toFixed(2)}%`,`Compare to WACC: ROIC > WACC = value creation`]}}},
+{id:"eva",name:"Economic Value Added (EVA)",formula:"EVA = NOPAT - (WACC × IC)",desc:"Dollar value created above cost of capital. Positive = creating wealth.",ch:"4",
+inputs:[{k:"nopat",l:"NOPAT ($)",ph:"1200000"},{k:"wacc",l:"WACC (%)",ph:"9"},{k:"ic",l:"Invested Capital ($)",ph:"8000000"}],
+calc:v=>{const cc=v.ic*(v.wacc/100),eva=v.nopat-cc;return{r:"$"+eva.toFixed(2),
+s:[`Capital Charge = $${v.ic.toLocaleString()} × ${v.wacc}% = $${cc.toFixed(2)}`,`EVA = $${v.nopat.toLocaleString()} - $${cc.toFixed(2)} = $${eva.toFixed(2)}`,eva>0?"✅ Creating shareholder value":"❌ Destroying value — returns below cost of capital"]}}},
+{id:"margins",name:"Margin Cascade",formula:"Gross → Operating → Net Margin",desc:"Profitability at each income statement level. Where do the margins leak?",ch:"3",
+inputs:[{k:"rev",l:"Revenue ($)",ph:"10000000"},{k:"cogs",l:"COGS ($)",ph:"6000000"},{k:"opex",l:"OpEx ($)",ph:"2500000"},{k:"ni",l:"Net Income ($)",ph:"1000000"}],
+calc:v=>{const gp=v.rev-v.cogs,oi=gp-v.opex,gm=(gp/v.rev)*100,om=(oi/v.rev)*100,nm=(v.ni/v.rev)*100;
+return{r:`G:${gm.toFixed(1)}% O:${om.toFixed(1)}% N:${nm.toFixed(1)}%`,
+s:[`Gross: ($${v.rev}-$${v.cogs})/$${v.rev} = ${gm.toFixed(1)}%`,`Operating: ($${gp}-$${v.opex})/$${v.rev} = ${om.toFixed(1)}%`,`Net: $${v.ni}/$${v.rev} = ${nm.toFixed(1)}%`,`Margin cascade: ${gm.toFixed(1)}% → ${om.toFixed(1)}% → ${nm.toFixed(1)}%`]}}}
+]},
+
+// ━━━━━━━━━━━━━━ OPERATIONS / FCF ━━━━━━━━━━━━━━
+{id:"ops",name:"Operations & FCF",ch:"Misc",icon:"🏭",formulas:[
+{id:"fcff",name:"Free Cash Flow to Firm (FCFF)",formula:"FCFF = EBIT(1-T) + D&A - CapEx - ΔWC",desc:"Cash available to ALL investors. Foundation of DCF valuation.",ch:"9",
+inputs:[{k:"ebit",l:"EBIT ($)",ph:"2000000"},{k:"t",l:"Tax (%)",ph:"21"},{k:"da",l:"D&A ($)",ph:"300000"},{k:"capex",l:"CapEx ($)",ph:"400000"},{k:"dwc",l:"ΔWC ($)",ph:"100000"}],
+calc:v=>{const nopat=v.ebit*(1-v.t/100),fcf=nopat+v.da-v.capex-v.dwc;return{r:"$"+fcf.toFixed(2),
+s:[`NOPAT = $${v.ebit.toLocaleString()} × (1-${v.t}%) = $${nopat.toFixed(2)}`,`+ D&A: $${v.da.toLocaleString()}`,`- CapEx: $${v.capex.toLocaleString()}`,`- ΔWC: $${v.dwc.toLocaleString()}`,`FCFF = $${fcf.toFixed(2)}`]}}},
+{id:"fcfe",name:"Free Cash Flow to Equity (FCFE)",formula:"FCFE = NI + D&A - CapEx - ΔWC + Net Borrowing",desc:"Cash available to equity holders after debt obligations.",ch:"9",
+inputs:[{k:"ni",l:"Net Income ($)",ph:"1000000"},{k:"da",l:"D&A ($)",ph:"200000"},{k:"capex",l:"CapEx ($)",ph:"300000"},{k:"dwc",l:"ΔWC ($)",ph:"50000"},{k:"nb",l:"Net Borrowing ($)",ph:"100000"}],
+calc:v=>{const fcfe=v.ni+v.da-v.capex-v.dwc+v.nb;return{r:"$"+fcfe.toFixed(2),
+s:[`NI: $${v.ni.toLocaleString()}`,`+ D&A: $${v.da.toLocaleString()}`,`- CapEx: $${v.capex.toLocaleString()}`,`- ΔWC: $${v.dwc.toLocaleString()}`,`+ Net Borrowing: $${v.nb.toLocaleString()}`,`FCFE = $${fcfe.toFixed(2)}`]}}},
+{id:"bep",name:"Break-Even Point",formula:"BEP = FC / (P - VC)",desc:"Minimum units to cover all costs. Critical for pricing and launch decisions.",ch:"4",
+inputs:[{k:"fc",l:"Fixed Costs ($)",ph:"500000"},{k:"p",l:"Price/Unit ($)",ph:"50"},{k:"vc",l:"Variable Cost/Unit ($)",ph:"30"}],
+calc:v=>{const cm=v.p-v.vc,bep=v.fc/cm,rev=bep*v.p;return{r:Math.ceil(bep)+" units",
+s:[`Contribution margin = $${v.p} - $${v.vc} = $${cm}/unit`,`CM ratio = ${((cm/v.p)*100).toFixed(1)}%`,`BEP = $${v.fc.toLocaleString()} / $${cm} = ${bep.toFixed(1)} units`,`BEP revenue: $${rev.toFixed(2)}`]}}},
+{id:"dol",name:"Degree of Operating Leverage",formula:"DOL = CM / EBIT",desc:"How sensitive is EBIT to sales changes? High DOL = amplified swings both ways.",ch:"4",
+inputs:[{k:"q",l:"Units Sold",ph:"50000"},{k:"p",l:"Price ($)",ph:"50"},{k:"v",l:"Variable Cost ($)",ph:"30"},{k:"fc",l:"Fixed Costs ($)",ph:"500000"}],
+calc:v=>{const cm=v.q*(v.p-v.v),ebit=cm-v.fc,dol=cm/ebit;return{r:dol.toFixed(2)+"x",
+s:[`Total CM: ${v.q.toLocaleString()} × ($${v.p}-$${v.v}) = $${cm.toLocaleString()}`,`EBIT: $${cm.toLocaleString()} - $${v.fc.toLocaleString()} = $${ebit.toLocaleString()}`,`DOL = $${cm.toLocaleString()} / $${ebit.toLocaleString()} = ${dol.toFixed(2)}x`,`Meaning: 1% change in sales → ${dol.toFixed(2)}% change in EBIT`]}}},
+{id:"cagr",name:"CAGR",formula:"CAGR = (End/Begin)^(1/n) - 1",desc:"Smoothed annual growth rate. Used everywhere in investing and business analysis.",ch:"3",
+inputs:[{k:"bv",l:"Beginning Value ($)",ph:"10000"},{k:"ev",l:"Ending Value ($)",ph:"25000"},{k:"n",l:"Years",ph:"5"}],
+calc:v=>{const cagr=(Math.pow(v.ev/v.bv,1/v.n)-1)*100;return{r:cagr.toFixed(2)+"%",
+s:[`CAGR = ($${v.ev.toLocaleString()}/$${v.bv.toLocaleString()})^(1/${v.n}) - 1`,`CAGR = ${cagr.toFixed(2)}%`]}}},
+{id:"ulbeta",name:"Unlever / Relever Beta",formula:"βU = βL / [1 + (1-T)(D/E)]",desc:"Strip leverage from beta for pure business risk comparison across firms.",ch:"9",
+inputs:[{k:"bl",l:"Levered Beta",ph:"1.4"},{k:"t",l:"Tax Rate (%)",ph:"21"},{k:"de",l:"D/E Ratio",ph:"0.5"}],
+calc:v=>{const bu=v.bl/(1+(1-v.t/100)*v.de);return{r:"βU = "+bu.toFixed(4),
+s:[`βU = ${v.bl} / [1 + (1-${v.t}%)(${v.de})]`,`βU = ${v.bl} / ${(1+(1-v.t/100)*v.de).toFixed(4)}`,`βU = ${bu.toFixed(4)}`,`Asset beta — pure business risk without leverage`]}}}
+]}
+];
+
+// ─── Flatten all formulas ───
+const allF=CATS.flatMap(c=>c.formulas.map(f=>({...f,catId:c.id,catName:c.name})));
+
+// ─── State ───
+let S={cat:"tvm",formula:null,inputs:{},result:null,search:"",showSearch:false};
+
+// ─── Render ───
+function render(){
+const app=document.getElementById("app");
+const cat=CATS.find(c=>c.id===S.cat);
+const formula=S.formula?allF.find(f=>f.id===S.formula):null;
+const sq=S.search.trim().toLowerCase();
+const searchR=sq?allF.filter(f=>f.name.toLowerCase().includes(sq)||f.desc.toLowerCase().includes(sq)||f.formula.toLowerCase().includes(sq)||(f.ch&&("ch"+f.ch).includes(sq))||("chapter"+f.ch).includes(sq)):[];
+
+app.innerHTML=`
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <h1>MBA Finance Toolkit</h1>
+      <div class="sub">${allF.length} formulas · FINA6200 Final Prep · BA II Plus</div>
+    </div>
+    <span class="badge badge-exam">EXAM MODE</span>
+  </div>
+  <div class="search-w">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input class="search-in" id="si" placeholder="Search formulas, chapters..." value="${S.search}">
+    ${sq&&searchR.length?`<div class="search-dd">${searchR.slice(0,8).map(f=>`<div class="search-dd-item" data-sid="${f.id}" data-cid="${f.catId}"><strong>${f.name}</strong><span>${f.catName} · Ch ${f.ch} · ${f.formula}</span></div>`).join("")}</div>`:""}
+  </div>
+  <div class="tabs" id="tabs">
+    ${CATS.map(c=>`<div class="tab${S.cat===c.id?" on":""}" data-cat="${c.id}">${c.icon} ${c.name}<span class="ch">${c.ch}</span></div>`).join("")}
+  </div>
+</div>
+
+<div class="main">
+${!formula?`
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Has BA II Plus steps</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--text3)"></div>Ch = Chapter</div>
+  </div>
+  <div class="cat-hdr">${cat.icon} ${cat.name} — ${cat.ch}</div>
+  <div class="grid">
+    ${cat.formulas.map(f=>`
+      <div class="card" data-fid="${f.id}">
+        <span class="ch-tag">Ch ${f.ch}</span>
+        ${f.ba?'<span class="ba-dot" title="BA II Plus"></span>':''}
+        <h3>${f.name}</h3>
+        <code>${f.formula}</code>
+        <p>${f.desc}</p>
+      </div>
+    `).join("")}
+  </div>
+`:`
+  <div class="detail">
+    <button class="back" id="backBtn">‹ ${cat.name}</button>
+    <div class="dtitle">${formula.name}</div>
+    <div class="ddesc">${formula.desc}</div>
+    <div class="formula-box"><code>${formula.formula}</code></div>
+    ${formula.inputs.map(inp=>`
+      <div class="inp-g">
+        <label>${inp.l}</label>
+        <input id="inp_${inp.k}" inputmode="${inp.type==="text"?"text":"decimal"}" placeholder="${inp.ph}" value="${S.inputs[inp.k]||""}">
+      </div>
+    `).join("")}
+    <button class="calc-btn" id="calcBtn">Calculate →</button>
+    ${S.result?`
+      <div class="result">
+        <div class="result-hdr">
+          <span class="result-lbl">Result</span>
+          <span class="result-val">${S.result.r}</span>
+        </div>
+        <div class="result-body">
+          ${S.result.s.map((step,i)=>`<div class="step"><span class="step-n">${i+1}</span><span class="step-t${step.includes("$")||step.includes("=")?" m":""}">${step}</span></div>`).join("")}
+          ${S.result.ba?`
+            <div class="ba-section">
+              <div class="ba-hdr">BA II Plus Steps</div>
+              ${S.result.ba.map(b=>`<div class="ba-step"><span class="ba-txt">${b}</span></div>`).join("")}
+            </div>
+          `:""}
+        </div>
+      </div>
+    `:""}
+  </div>
+`}
+</div>`;
+
+// ─── Events ───
+document.getElementById("si").addEventListener("input",e=>{S.search=e.target.value;render();document.getElementById("si").focus()});
+document.querySelectorAll("[data-cat]").forEach(el=>el.addEventListener("click",()=>{S.cat=el.dataset.cat;S.formula=null;S.result=null;S.search="";render()}));
+document.querySelectorAll("[data-fid]").forEach(el=>el.addEventListener("click",()=>{S.formula=el.dataset.fid;S.inputs={};S.result=null;render()}));
+document.querySelectorAll("[data-sid]").forEach(el=>el.addEventListener("click",()=>{S.cat=el.dataset.cid;S.formula=el.dataset.sid;S.inputs={};S.result=null;S.search="";render()}));
+if(formula){
+  formula.inputs.forEach(inp=>{const el=document.getElementById("inp_"+inp.k);if(el){el.addEventListener("input",e=>{S.inputs[inp.k]=e.target.value});el.addEventListener("keydown",e=>{if(e.key==="Enter")doCalc(formula)})}});
+  document.getElementById("calcBtn")?.addEventListener("click",()=>doCalc(formula));
+  document.getElementById("backBtn")?.addEventListener("click",()=>{S.formula=null;S.result=null;render()});
+}
+const at=document.querySelector(".tab.on");if(at)at.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
+}
+
+function doCalc(formula){
+const parsed={};let valid=true;
+formula.inputs.forEach(inp=>{const val=S.inputs[inp.k];
+if(inp.type==="text"||inp.k==="cfs"||inp.k==="weights"||inp.k==="returns"||inp.k==="probs"||inp.k==="rets"||inp.k==="divs"||inp.k==="rates"){parsed[inp.k]=val||inp.ph}
+else{const num=parseFloat(val||inp.ph);if(isNaN(num))valid=false;parsed[inp.k]=num}});
+if(valid){S.result=formula.calc(parsed);render()}
+}
+
+render();
+</script>
+</body>
+</html>
